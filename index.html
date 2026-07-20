@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>FinnsBook — The Official Odds on Finn</title>
+<meta name="description" content="The family's premier (satirical) sportsbook. Live odds, prop bets, and the Ick Counter." />
+<style>
+  :root{
+    --bg:#05070d;
+    --panel:#0c1120;
+    --panel2:#111a30;
+    --line:#1d2947;
+    --ink:#e8eefc;
+    --muted:#8ea0c7;
+    --neon:#39ff88;      /* money green */
+    --neon2:#00e5ff;     /* cyan */
+    --hot:#ff2e63;       /* down/red */
+    --gold:#ffd24a;
+    --shadow:0 10px 40px rgba(0,0,0,.55);
+    --r:16px;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #0f1a3a 0%, transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, #101f1a 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    padding-bottom:64px;
+  }
+  a{color:inherit}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+  /* ---------- TICKER ---------- */
+  .ticker{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,#0a0f1c,#070b16);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+    box-shadow:0 4px 24px rgba(0,0,0,.5);
+  }
+  .ticker__track{display:inline-block;padding:9px 0;animation:scroll 38s linear infinite;font-weight:700;font-size:13px;letter-spacing:.02em}
+  .ticker__track span{margin:0 22px;color:var(--muted)}
+  .ticker__track b{color:var(--ink)}
+  .up{color:var(--neon)} .down{color:var(--hot)}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.ticker__track{animation:none}}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:34px 0 8px;text-align:center}
+  .brand{
+    display:inline-flex;align-items:center;gap:10px;
+    font-weight:900;letter-spacing:.14em;font-size:13px;color:var(--muted);
+    text-transform:uppercase;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--neon);box-shadow:0 0 14px var(--neon);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{
+    font-size:clamp(38px,11vw,88px);line-height:.95;margin:14px 0 6px;
+    font-weight:900;letter-spacing:-.02em;
+    background:linear-gradient(180deg,#fff,#9fd8ff 60%,#39ff88);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 60px rgba(57,255,136,.15);
+  }
+  .tag{color:var(--muted);font-size:15px;max-width:560px;margin:0 auto;line-height:1.5}
+  .liveflag{
+    display:inline-flex;gap:7px;align-items:center;margin-top:14px;
+    background:rgba(255,46,99,.12);border:1px solid rgba(255,46,99,.4);
+    color:#ff6b8f;font-weight:800;font-size:12px;letter-spacing:.08em;
+    padding:6px 12px;border-radius:999px;text-transform:uppercase;
+  }
+  .liveflag .rec{width:8px;height:8px;border-radius:50%;background:var(--hot);animation:pulse 1s infinite}
+
+  /* ---------- SECTION ---------- */
+  section{margin-top:40px}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .sec-h h2{font-size:22px;margin:0;font-weight:900;letter-spacing:-.01em}
+  .sec-h .k{color:var(--neon2);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+
+  /* collapsible */
+  section.collapsible .sec-h{
+    cursor:pointer;user-select:none;align-items:center;
+    padding:10px 14px;margin:0 0 14px;border-radius:12px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);transition:border-color .15s,background .15s;
+  }
+  section.collapsible .sec-h:hover{border-color:#2f6bff}
+  .sec-h .chev{
+    margin-left:auto;flex:0 0 auto;width:22px;height:22px;display:grid;place-items:center;
+    color:var(--muted);transition:transform .3s;font-size:13px;
+  }
+  section.collapsed .sec-h{margin-bottom:0}
+  section.collapsed .chev{transform:rotate(-90deg)}
+  section.collapsed .sec-h:hover{border-color:var(--line)}
+  .sec-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .32s cubic-bezier(.2,.8,.2,1),opacity .25s}
+  section.collapsed .sec-body{grid-template-rows:0fr;opacity:0}
+  .sec-body>.sec-inner{overflow:hidden;min-height:0}
+  .sub{color:var(--muted);font-size:13px;margin:-6px 0 16px}
+
+  /* ---------- ODDS BOARD ---------- */
+  .board{display:grid;gap:12px}
+  .mkt{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:var(--r);
+    padding:14px 14px 12px;box-shadow:var(--shadow);
+  }
+  .mkt__top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .mkt__q{font-weight:800;font-size:15.5px}
+  .mkt__meta{color:var(--muted);font-size:11px;white-space:nowrap}
+  .lines{display:grid;grid-template-columns:1fr;gap:8px}
+  .line{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:#0a1122;border:1px solid var(--line);border-radius:12px;
+    padding:11px 12px;cursor:pointer;transition:border-color .15s,transform .05s,background .15s;
+  }
+  .line:hover{border-color:#2f6bff;background:#0c1530}
+  .line:active{transform:scale(.985)}
+  .line.picked{border-color:var(--neon);background:rgba(57,255,136,.06)}
+  .line__name{font-size:14px;font-weight:600}
+  .odds{
+    font-variant-numeric:tabular-nums;font-weight:900;font-size:16px;min-width:64px;text-align:right;
+    padding:4px 10px;border-radius:9px;background:#060b18;border:1px solid var(--line);
+    transition:color .3s,box-shadow .3s;
+  }
+  .odds.flash-up{color:var(--neon);box-shadow:0 0 0 1px var(--neon) inset}
+  .odds.flash-down{color:var(--hot);box-shadow:0 0 0 1px var(--hot) inset}
+
+  /* ---------- BETSLIP ---------- */
+  .slip{
+    position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+    width:calc(100% - 24px);max-width:520px;z-index:60;
+    background:linear-gradient(180deg,#0e1730,#0a1020);
+    border:1px solid var(--neon);border-radius:16px;
+    box-shadow:0 18px 50px rgba(0,0,0,.7),0 0 30px rgba(57,255,136,.12);
+    padding:12px 14px;opacity:0;pointer-events:none;transform:translate(-50%,20px);
+    transition:opacity .2s,transform .2s;
+  }
+  .slip.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+  .slip__row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .slip__title{font-weight:900;font-size:13px;letter-spacing:.06em;color:var(--neon);text-transform:uppercase}
+  .slip__pick{font-size:13px;color:var(--muted);margin-top:2px}
+  .slip__pick b{color:var(--ink)}
+  .slip button{
+    background:var(--neon);color:#04120a;border:0;font-weight:900;font-size:14px;
+    padding:11px 16px;border-radius:11px;cursor:pointer;letter-spacing:.02em;
+  }
+  .slip button:active{transform:scale(.97)}
+  .slip__x{background:none!important;color:var(--muted)!important;font-size:20px!important;padding:4px 8px!important;line-height:1}
+
+  /* ---------- QUOTE WALL ---------- */
+  .qhero{
+    position:relative;background:linear-gradient(180deg,#12193a,#0a0f22);
+    border:1px solid #2a3a6a;border-radius:20px;padding:26px 22px 20px;
+    box-shadow:var(--shadow),0 0 50px rgba(0,229,255,.06);cursor:pointer;overflow:hidden;
+  }
+  .qhero::before{content:"“";position:absolute;top:-30px;left:10px;font-size:180px;color:rgba(255,255,255,.04);font-family:Georgia,serif}
+  .qbadge{display:inline-flex;gap:7px;align-items:center;background:rgba(255,46,99,.12);border:1px solid rgba(255,46,99,.4);color:#ff6b8f;font-weight:800;font-size:11px;letter-spacing:.08em;padding:5px 11px;border-radius:999px;text-transform:uppercase}
+  .qtext{margin:16px 0 10px;font-size:clamp(20px,5.5vw,30px);font-weight:800;line-height:1.28;letter-spacing:-.01em;position:relative}
+  .qfiled{color:var(--neon2);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .qmeter{display:flex;align-items:center;gap:10px;margin-top:16px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .qbar{flex:1;height:7px;background:#0a1122;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .qbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--hot),var(--gold));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+  .qgrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+  @media(min-width:640px){.qgrid{grid-template-columns:1fr 1fr}}
+  .qcard{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:13px;padding:14px 15px;font-weight:600;font-size:14.5px;line-height:1.4;color:#dbe4f7}
+  .qcard .tag{display:block;margin-top:8px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+
+  /* ---------- ICK COUNTER ---------- */
+  .ick{
+    background:
+      repeating-linear-gradient(45deg,#1a1204 0 18px,#150f03 18px 36px);
+    border:2px solid var(--gold);border-radius:18px;text-align:center;
+    padding:22px 16px;box-shadow:var(--shadow),0 0 40px rgba(255,210,74,.08);
+  }
+  .ick .lbl{color:var(--gold);font-weight:900;letter-spacing:.18em;text-transform:uppercase;font-size:12px}
+  .ick .num{font-size:clamp(54px,17vw,120px);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,210,74,.4);font-variant-numeric:tabular-nums}
+  .ick .cap{color:#f4d98a;font-size:14px;font-weight:700;margin-top:4px}
+  .ick button{margin-top:14px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-weight:800;padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13px}
+  .ick button:active{transform:scale(.97)}
+
+  /* ---------- REVIEWS ---------- */
+  .reviews{display:grid;gap:12px;grid-template-columns:1fr}
+  @media(min-width:640px){.reviews{grid-template-columns:1fr 1fr}}
+  .rev{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:14px}
+  .rev__top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .stars{color:var(--gold);font-size:15px;letter-spacing:2px}
+  .rev__by{color:var(--muted);font-size:12px}
+  .rev__t{font-weight:800;font-size:15px;margin:2px 0 6px}
+  .rev__b{color:#c3cfe8;font-size:13.5px;line-height:1.5}
+  .avgbar{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .avgbar .big{font-size:40px;font-weight:900;color:var(--hot)}
+  .avgbar .stars{font-size:20px}
+  .avgbar small{color:var(--muted)}
+
+  /* ---------- BINGO ---------- */
+  .bingo{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .cell{
+    aspect-ratio:1;background:#0a1122;border:1px solid var(--line);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:4px;font-size:clamp(7.5px,2.1vw,12px);font-weight:700;color:#c3cfe8;cursor:pointer;
+    transition:transform .05s,background .15s,border-color .15s;line-height:1.2;overflow:hidden;
+  }
+  @media(min-width:560px){.bingo{gap:8px}.cell{padding:6px;border-radius:12px}}
+  .cell:active{transform:scale(.95)}
+  .cell.on{background:rgba(57,255,136,.14);border-color:var(--neon);color:#fff}
+  .cell.free{background:rgba(0,229,255,.1);border-color:var(--neon2);color:#cfefff}
+  .bingo-win{text-align:center;color:var(--neon);font-weight:900;margin-top:12px;height:20px;letter-spacing:.05em}
+
+  /* ---------- COUNTDOWN ---------- */
+  .cd{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
+  .cd .u{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:16px 8px}
+  .cd .n{font-size:clamp(26px,8vw,44px);font-weight:900;font-variant-numeric:tabular-nums;color:#fff}
+  .cd .l{color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+
+  /* ---------- WIN FX ---------- */
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:90;display:none}
+  #confetti.on{display:block}
+  .flash{position:fixed;inset:0;background:var(--neon);opacity:0;pointer-events:none;z-index:88;transition:opacity .12s}
+  .flash.on{opacity:.22}
+  .winstamp{position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;pointer-events:none}
+  .winstamp.on{display:flex}
+  .winstamp__in{
+    text-align:center;transform:scale(.2) rotate(-16deg);opacity:0;
+    background:linear-gradient(180deg,#0e1730,#0a1020);border:3px solid var(--neon);
+    border-radius:22px;padding:26px 40px;box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(57,255,136,.35);
+  }
+  .winstamp.on .winstamp__in{animation:slam .5s cubic-bezier(.2,1.3,.4,1) forwards}
+  @keyframes slam{
+    0%{transform:scale(.2) rotate(-16deg);opacity:0}
+    60%{transform:scale(1.08) rotate(-4deg);opacity:1}
+    80%{transform:scale(.97) rotate(-6deg)}
+    100%{transform:scale(1) rotate(-6deg);opacity:1}
+  }
+  .winstamp__k{color:var(--neon);font-weight:900;letter-spacing:.2em;text-transform:uppercase;font-size:12px}
+  .winstamp__big{font-size:clamp(52px,15vw,96px);font-weight:900;line-height:1;margin:6px 0;background:linear-gradient(180deg,#fff,#39ff88);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .winstamp__sub{color:#c3cfe8;font-weight:700;font-size:14px}
+
+  footer{margin-top:56px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+  footer .disc{max-width:560px;margin:10px auto 0;font-size:11.5px;opacity:.8}
+  .chip{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:3px;font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__track" id="tick"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="brand"><span class="dot"></span> FinnsBook &nbsp;·&nbsp; est. the day we met him</div>
+    <h1>The Odds on Finn</h1>
+    <p class="tag">The family's premier prediction market. Live lines on the engagement, prop bets on his personality, and a running tally of the ick.</p>
+    <div class="liveflag"><span class="rec"></span> Live · Lines updating</div>
+  </header>
+
+  <!-- ODDS BOARD -->
+  <section>
+    <div class="sec-h"><span class="k">Main Card</span><h2>Will Lizzy Come to Her Senses?</h2></div>
+    <p class="sub">Tap a line to add it to your slip. Odds shift with the market (and vibes).</p>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- QUOTE WALL -->
+  <section>
+    <div class="sec-h"><span class="k">On the Record</span><h2>Finn Said That. Out Loud.</h2></div>
+    <p class="sub">No edits. No context that helps. Tap the quote to draw a new one from the vault.</p>
+    <div class="qhero" id="qhero">
+      <div class="qbadge"><span class="rec"></span> Verified Real Quote</div>
+      <blockquote class="qtext" id="qtext">—</blockquote>
+      <div class="qfiled" id="qfiled">—</div>
+      <div class="qmeter">
+        <span>Coherence</span>
+        <div class="qbar"><i id="qbar"></i></div>
+        <span id="qpct">0%</span>
+      </div>
+    </div>
+    <div class="qgrid" id="qgrid"></div>
+  </section>
+
+  <!-- ICK COUNTER -->
+  <section>
+    <div class="sec-h"><span class="k">Safety Board</span><h2>The Ick Counter</h2></div>
+    <div class="ick">
+      <div class="lbl">Days since Finn made it about himself</div>
+      <div class="num" id="ickNum">0</div>
+      <div class="cap" id="ickCap">Current streak: not great, Finn.</div>
+      <button id="ickReset">He just did it again — reset</button>
+    </div>
+  </section>
+
+  <!-- PROP BETS handled inside board -->
+
+  <!-- REVIEWS -->
+  <section>
+    <div class="sec-h"><span class="k">Verified In-Laws</span><h2>The Reviews Are In</h2></div>
+    <div class="avgbar">
+      <div class="big">1.2</div>
+      <div>
+        <div class="stars">★☆☆☆☆</div>
+        <small>Overall rating · <b id="revCount">0</b> reviews · 0% would recommend</small>
+      </div>
+    </div>
+    <div class="reviews" id="reviews"></div>
+  </section>
+
+  <!-- BINGO -->
+  <section>
+    <div class="sec-h"><span class="k">Dinner Table</span><h2>Family Gathering Bingo</h2></div>
+    <p class="sub">Tap as it happens in real time. Row, column, or diagonal wins nothing but validation.</p>
+    <div class="bingo" id="bingo"></div>
+    <div class="bingo-win" id="bingoWin"></div>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section>
+    <div class="sec-h"><span class="k">Final Warning</span><h2>Time Left to Back Out</h2></div>
+    <p class="sub" id="cdSub">Set the real wedding date in the code and this becomes menacingly accurate.</p>
+    <div class="cd">
+      <div class="u"><div class="n" id="cdD">--</div><div class="l">Days</div></div>
+      <div class="u"><div class="n" id="cdH">--</div><div class="l">Hours</div></div>
+      <div class="u"><div class="n" id="cdM">--</div><div class="l">Mins</div></div>
+      <div class="u"><div class="n" id="cdS">--</div><div class="l">Secs</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <div>FinnsBook™ — no real wagers, no real money, no chill.</div>
+    <div class="disc">This is a work of satire made by family, for family. All "odds," "reviews," and "stats" are jokes, not statements of fact. Any resemblance to Finn's actual behavior is a coincidence he brought on himself.</div>
+    <div style="margin-top:12px">
+      <span class="chip">🎰 Odds are made up</span>
+      <span class="chip">💚 Made with love &amp; zero chill</span>
+      <span class="chip">📉 $FINN not financial advice</span>
+    </div>
+  </footer>
+</div>
+
+<!-- WIN FX -->
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="winstamp" id="winstamp" aria-hidden="true">
+  <div class="winstamp__in">
+    <div class="winstamp__k">Payout Confirmed</div>
+    <div class="winstamp__big">BINGO!</div>
+    <div class="winstamp__sub">He is exactly who we said he was.</div>
+  </div>
+</div>
+<div class="flash" id="flash" aria-hidden="true"></div>
+
+<!-- BETSLIP -->
+<div class="slip" id="slip">
+  <div class="slip__row">
+    <div>
+      <div class="slip__title">Bet Slip</div>
+      <div class="slip__pick" id="slipPick">—</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="slipPlace">Place Bet</button>
+      <button class="slip__x" id="slipX" aria-label="clear">×</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   EDIT ME: everything below is your ammo. Swap in real bits.
+   ========================================================= */
+const CONFIG = {
+  fiance: "Finn",
+  partner: "Lizzy",
+  weddingDate: "2027-01-20T16:00:00", // ~6 months out — edit to the real date
+
+  // Sportsbook markets. Odds are American style; positive = underdog.
+  markets: [
+    { q:"Breakup before the wedding", meta:"Main line", lines:[
+        {name:"Yes — she wises up", odds:-135},
+        {name:"No — she goes through with it", odds:+115},
+      ]},
+    { q:"Timing of the inevitable", meta:"Futures", lines:[
+        {name:"By next Thanksgiving", odds:+240},
+        {name:"Cold feet at the rehearsal", odds:+650},
+        {name:"Left at the altar", odds:+2200},
+        {name:"They actually last (long shot)", odds:+130},
+      ]},
+    { q:"Prop: mentions the gym at family dinner", meta:"Over/Under 2.5", lines:[
+        {name:"Over 2.5 times", odds:-160},
+        {name:"Under 2.5 times", odds:+130},
+      ]},
+    { q:"Prop: makes a story about himself", meta:"Over/Under 4.5", lines:[
+        {name:"Over 4.5 times", odds:-220},
+        {name:"Under 4.5 times", odds:+175},
+      ]},
+    { q:"Parlay of the night", meta:"All must hit", lines:[
+        {name:"Corrects someone + name-drops + says 'to be fair'", odds:+900},
+      ]},
+  ],
+
+  // The quote wall. These are the crown jewels. filed = deadpan context tag.
+  quotes: [
+    {text:"I love Lizzy so much, but busses and planes are too scary.", filed:"Commitment · Transportation"},
+    {text:"I can't go on a mission, I'd be too homesick.", filed:"Independence"},
+    {text:"I've lived with a roommate — my brother, growing up.", filed:"Life Experience"},
+    {text:"I'm so ready to commit to a marriage, but a driver's license is too much.", filed:"Readiness · Logic"},
+  ],
+
+  reviews: [
+    {stars:1, by:"Future brother-in-law", t:"Firm, confident handshake. Nothing else.", b:"Told me a 20-minute story about his own promotion at my birthday dinner. It was my birthday."},
+    {stars:1, by:"Aunt Carol", t:"He 'to be fair'd' the priest", b:"Corrected the pronunciation of a dish his own mother made. Bold. Wrong, but bold."},
+    {stars:2, by:"The dog", t:"Two stars, would sniff again", b:"Only redeeming quality is he leaves food unattended."},
+    {stars:1, by:"Cousin Ty", t:"Ran a red light of self-awareness", b:"Asked what I do for a living, then answered for me. Incorrectly."},
+  ],
+
+  // 5x5 = 25 squares. Index 12 (dead center) is the FREE space.
+  bingo: [
+    "Mentions his portfolio","'To be fair…'","Corrects someone","Talks over Lizzy","Name-drops",
+    "One-ups a story","Checks his reflection","Fake laughs loudly","'I'm just being honest'","Brings up the gym",
+    "Says 'per se'","Something is 'too scary'","FREE","Won't drive somewhere","Brings up being homesick",
+    "'I've basically lived alone'","Makes it about himself","Humble-brags","Says 'no offense'","Refuses public transit",
+    "Explains what you just said","Agrees with himself","Name of a certification","'We should get going' (stays 2h)","Mentions his skincare",
+  ],
+};
+
+/* ---------- TICKER ---------- */
+(function(){
+  const items = [
+    ['$FINN','−12.4%','down'],['ENGAGEMENT','−8.1%','down'],['LIZZY-CONF','+3.2%','up'],
+    ['CRINGE VOL','+40%','up'],['CHARM','0.00','down'],['EGO','ALL-TIME HIGH','up'],
+    ['THE ICK','TRENDING','up'],['SELF-AWARENESS','HALTED','down'],['RED FLAGS','+22%','up'],
+  ];
+  const build = ()=>items.map(([k,v,d])=>`<span><b>${k}</b> <i class="${d}" style="font-style:normal">${v}</i></span>`).join('');
+  document.getElementById('tick').innerHTML = build()+build();
+})();
+
+/* ---------- ODDS BOARD + BETSLIP ---------- */
+const board=document.getElementById('board');
+const slip=document.getElementById('slip'), slipPick=document.getElementById('slipPick');
+let current=null;
+
+function fmt(o){return o>0?('+'+o):(''+o);}
+CONFIG.markets.forEach((m,mi)=>{
+  const el=document.createElement('div');el.className='mkt';
+  el.innerHTML=`<div class="mkt__top"><div class="mkt__q">${m.q}</div><div class="mkt__meta">${m.meta}</div></div>`;
+  const lines=document.createElement('div');lines.className='lines';
+  m.lines.forEach((ln,li)=>{
+    const r=document.createElement('div');r.className='line';
+    r.innerHTML=`<div class="line__name">${ln.name}</div><div class="odds" id="o-${mi}-${li}">${fmt(ln.odds)}</div>`;
+    r.addEventListener('click',()=>{
+      document.querySelectorAll('.line.picked').forEach(x=>x.classList.remove('picked'));
+      r.classList.add('picked');
+      current={m:m.q,name:ln.name,odds:ln.odds};
+      slipPick.innerHTML=`<b>${ln.name}</b> @ ${fmt(ln.odds)} <span style="opacity:.6">· ${m.q}</span>`;
+      slip.classList.add('show');
+    });
+    lines.appendChild(r);
+  });
+  el.appendChild(lines);board.appendChild(el);
+});
+document.getElementById('slipX').onclick=()=>{slip.classList.remove('show');document.querySelectorAll('.line.picked').forEach(x=>x.classList.remove('picked'));current=null;};
+document.getElementById('slipPlace').onclick=()=>{
+  if(!current)return;
+  slipPick.innerHTML=`✅ <b>Bet placed.</b> Nothing is at stake but your dignity.`;
+  setTimeout(()=>slip.classList.remove('show'),1400);
+};
+
+/* live-ish odds drift (deterministic-ish wander, no real money obviously) */
+let seed=42; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+setInterval(()=>{
+  CONFIG.markets.forEach((m,mi)=>m.lines.forEach((ln,li)=>{
+    if(rnd()<0.28){
+      const step=(rnd()<.5?-1:1)*(5+Math.floor(rnd()*15));
+      const before=ln.odds;
+      ln.odds=Math.max(-450,Math.min(3000,ln.odds+step));
+      const cell=document.getElementById(`o-${mi}-${li}`);
+      if(cell){cell.textContent=fmt(ln.odds);
+        cell.classList.remove('flash-up','flash-down');
+        void cell.offsetWidth;
+        cell.classList.add(ln.odds>before?'flash-down':'flash-up'); // longer odds = worse for him = green good news
+      }
+    }
+  }));
+},2200);
+
+/* ---------- QUOTE WALL ---------- */
+(function(){
+  const qs=CONFIG.quotes;
+  const qtext=document.getElementById('qtext'),qfiled=document.getElementById('qfiled'),
+        qbar=document.getElementById('qbar'),qpct=document.getElementById('qpct'),
+        qhero=document.getElementById('qhero'),qgrid=document.getElementById('qgrid');
+  // deterministic low "coherence" score per quote, for the bit
+  const score=t=>8+((t.length*7)%22); // always low, always damning
+  let idx=0;
+  function show(i){
+    idx=((i%qs.length)+qs.length)%qs.length;const q=qs[idx];
+    qtext.textContent='“'+q.text+'”';qfiled.textContent='Filed under: '+q.filed;
+    const s=score(q.text);requestAnimationFrame(()=>{qbar.style.width=s+'%';qpct.textContent=s+'%';});
+    qtext.animate?qtext.animate([{opacity:.2,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280}):0;
+  }
+  qhero.onclick=()=>show(idx+1);
+  show(0);
+  setInterval(()=>show(idx+1),7000);
+  qs.forEach(q=>{
+    const c=document.createElement('div');c.className='qcard';
+    c.innerHTML=`“${q.text}”<span class="tag">${q.filed}</span>`;
+    qgrid.appendChild(c);
+  });
+})();
+
+/* ---------- ICK COUNTER ---------- */
+const ickNum=document.getElementById('ickNum'),ickCap=document.getElementById('ickCap');
+let ick=parseInt(localStorage.getItem('ickDays')||'0',10);
+const ickCaps=["Current streak: not great, Finn.","A new record low.","The board is disappointed.","Somehow negative energy.","Historic underperformance."];
+function renderIck(){ickNum.textContent=ick;ickCap.textContent=ick===0?"Current streak: not great, Finn.":ickCaps[ick%ickCaps.length];}
+renderIck();
+document.getElementById('ickReset').onclick=()=>{ick=0;localStorage.setItem('ickDays','0');renderIck();ickNum.animate?ickNum.animate([{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:280}):0;};
+
+/* ---------- REVIEWS ---------- */
+const rv=document.getElementById('reviews');
+CONFIG.reviews.forEach(r=>{
+  const s='★★★★★☆☆☆☆☆'.slice(5-r.stars,10-r.stars);
+  const d=document.createElement('div');d.className='rev';
+  d.innerHTML=`<div class="rev__top"><div class="stars">${s}</div><div class="rev__by">— ${r.by}</div></div>
+    <div class="rev__t">${r.t}</div><div class="rev__b">${r.b}</div>`;
+  rv.appendChild(d);
+});
+document.getElementById('revCount').textContent=CONFIG.reviews.length;
+
+/* ---------- BINGO ---------- */
+const bg=document.getElementById('bingo'),bw=document.getElementById('bingoWin');
+const state=CONFIG.bingo.map(t=>t==='FREE');
+CONFIG.bingo.forEach((t,i)=>{
+  const c=document.createElement('div');
+  c.className='cell'+(t==='FREE'?' free on':'');
+  c.textContent=t;
+  c.onclick=()=>{if(t==='FREE')return;state[i]=!state[i];c.classList.toggle('on');checkBingo();};
+  bg.appendChild(c);
+});
+const N=5; // fixed 5x5 grid
+let hasWon=false;
+function checkBingo(){
+  const on=(r,c)=>!!state[r*N+c];
+  let win=false;
+  for(let r=0;r<N;r++){let all=true;for(let c=0;c<N;c++)if(!on(r,c))all=false;if(all)win=true;}
+  for(let c=0;c<N;c++){let all=true;for(let r=0;r<N;r++)if(!on(r,c))all=false;if(all)win=true;}
+  let d1=true,d2=true;for(let i=0;i<N;i++){if(!on(i,i))d1=false;if(!on(i,N-1-i))d2=false;}
+  if(d1||d2)win=true;
+  bw.textContent=win?"🎉 BINGO — he is who we said he was.":"";
+  if(win&&!hasWon){hasWon=true;payout();}
+  if(!win)hasWon=false; // re-arm once the line is broken
+}
+
+/* ---------- WIN PAYOUT (confetti + stamp + flash) ---------- */
+function payout(){
+  const stamp=document.getElementById('winstamp'),flash=document.getElementById('flash');
+  // flash
+  flash.classList.add('on');setTimeout(()=>flash.classList.remove('on'),140);
+  // stamp
+  stamp.classList.remove('on');void stamp.offsetWidth;stamp.classList.add('on');
+  setTimeout(()=>stamp.classList.remove('on'),2600);
+  confetti(2600);
+  if(navigator.vibrate)navigator.vibrate([30,40,30]);
+}
+function confetti(duration){
+  const cv=document.getElementById('confetti'),ctx=cv.getContext('2d');
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  function size(){cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;}
+  size();cv.classList.add('on');
+  const colors=['#39ff88','#00e5ff','#ffd24a','#ff2e63','#ffffff'];
+  const P=[];const count=Math.min(180,Math.floor(innerWidth/4));
+  for(let i=0;i<count;i++){
+    P.push({
+      x:Math.random()*cv.width, y:-20*dpr-Math.random()*cv.height*0.4,
+      vx:(Math.random()-.5)*6*dpr, vy:(2+Math.random()*4)*dpr,
+      w:(6+Math.random()*6)*dpr, h:(8+Math.random()*8)*dpr,
+      rot:Math.random()*Math.PI, vr:(Math.random()-.5)*0.3,
+      c:colors[(Math.random()*colors.length)|0]
+    });
+  }
+  const g=0.12*dpr;let start=null;
+  function frame(t){
+    if(start===null)start=t;const elapsed=t-start;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(p=>{
+      p.vy+=g;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vx*=0.995;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.c;ctx.globalAlpha=elapsed>duration-600?Math.max(0,(duration-elapsed)/600):1;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    });
+    if(elapsed<duration){requestAnimationFrame(frame);}
+    else{ctx.clearRect(0,0,cv.width,cv.height);cv.classList.remove('on');}
+  }
+  requestAnimationFrame(frame);
+  addEventListener('resize',size,{once:true});
+}
+
+/* ---------- COLLAPSIBLE SECTIONS ---------- */
+(function(){
+  const KEY='finnCollapsed';
+  let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  const secs=Array.from(document.querySelectorAll('.wrap > section')).filter(s=>s.querySelector('.sec-h'));
+  secs.forEach((sec,i)=>{
+    const head=sec.querySelector('.sec-h');
+    const id=(head.querySelector('h2')?.textContent||('sec'+i)).trim();
+    sec.classList.add('collapsible');
+    // wrap everything after the header into an animatable body
+    const body=document.createElement('div');body.className='sec-body';
+    const inner=document.createElement('div');inner.className='sec-inner';
+    let n=head.nextSibling;
+    while(n){const next=n.nextSibling;inner.appendChild(n);n=next;}
+    body.appendChild(inner);sec.appendChild(body);
+    // chevron
+    const chev=document.createElement('span');chev.className='chev';chev.textContent='▾';
+    head.appendChild(chev);
+    head.setAttribute('role','button');head.setAttribute('tabindex','0');
+    if(saved[id])sec.classList.add('collapsed');
+    const toggle=()=>{
+      sec.classList.toggle('collapsed');
+      saved[id]=sec.classList.contains('collapsed');
+      try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}
+    };
+    head.addEventListener('click',toggle);
+    head.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+  });
+})();
+
+/* ---------- COUNTDOWN ---------- */
+(function(){
+  const sub=document.getElementById('cdSub');
+  if(!CONFIG.weddingDate){sub.textContent="Add the real wedding date in the code (CONFIG.weddingDate) to arm the countdown.";return;}
+  sub.textContent="The clock is running. It is not too late, Lizzy.";
+  const target=new Date(CONFIG.weddingDate).getTime();
+  const D=document.getElementById('cdD'),H=document.getElementById('cdH'),M=document.getElementById('cdM'),S=document.getElementById('cdS');
+  function tick(){
+    const diff=target-Date.now();
+    if(diff<=0){sub.textContent="Time's up. Godspeed, Lizzy.";D.textContent=H.textContent=M.textContent=S.textContent="0";return;}
+    const d=Math.floor(diff/864e5),h=Math.floor(diff%864e5/36e5),m=Math.floor(diff%36e5/6e4),s=Math.floor(diff%6e4/1e3);
+    D.textContent=d;H.textContent=String(h).padStart(2,'0');M.textContent=String(m).padStart(2,'0');S.textContent=String(s).padStart(2,'0');
+  }
+  tick();setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
